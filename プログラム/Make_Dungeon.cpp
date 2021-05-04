@@ -6,15 +6,10 @@
 
 Make_Dungeon::Make_Dungeon() {
 
-	//////// ライブラリで色の取得///////
-	SKY   = GetColor( 0, 255, 255);
-	GRAY  = GetColor(96,  96,  96);
-	BLACK = GetColor( 0,  0,  0);
-	WHITE = GetColor(255, 255, 255);
-	//////////初期化/////////
 	std::fill((int*)maze, (int*)(maze + lengthof(maze)), 0);   //maze初期化
 	std::fill((int*)dungeon, (int*)(dungeon + lengthof(dungeon)), 4); //dungeon初期化
 
+	//ライブラリで画像の読み込み
     floorgh= LoadGraph("image/base.png");
 	boxgh = LoadGraph("image/box.png");
 	cocoongh = LoadGraph("image/cocoon.png");
@@ -22,17 +17,28 @@ Make_Dungeon::Make_Dungeon() {
 	wall2gh = LoadGraph("image/wall2.png");
 	darkgh = LoadGraph("image/dark.png");
 	stairsgh = LoadGraph("image/stairs.png");
-	blackgh = LoadGraph("image/black.png");
-	countx = 0;
-	county = 0;
+    
+	//他初期化
 	count = 0;
 }
 
+Make_Dungeon::~Make_Dungeon() {
+	//画像を捨てる
+	DeleteGraph(floorgh);
+	DeleteGraph(boxgh);
+	DeleteGraph(cocoongh);
+	DeleteGraph(wallgh);
+	DeleteGraph(wall2gh);
+	DeleteGraph(darkgh);
+	DeleteGraph(darkgh);
+	DeleteGraph(stairsgh);
+}
 
-//////ダンジョンの生成(棒倒し法)/////
+
+//////ダンジョンの生成(棒倒し法)///////
 void Make_Dungeon::make_dungeon() {
 
-	/////////////////////迷路の生成//////////////////
+	//////////////迷路の生成///////////////
 	 
 	//柱から壁を作る時に使う値の定義
 	int XP[4] = { 0,1,0,-1 };  //[作らない、右に1マス,作らない、左に1マス]
@@ -78,8 +84,13 @@ void Make_Dungeon::make_dungeon() {
 
 
 	/////////////迷路を使用してダンジョンの生成///////////////
+	 
+	//一様分布乱数生成器の作成
+	std::random_device rnd; //真の乱数
+	std::mt19937 mt(rnd()); //疑似乱数を真の乱数で初期化
+	std::uniform_int_distribution<> rand100(0, 100); //0～100の一様分布乱数
 	
-	//全体を壁にする
+    //全体を壁にする
 	std::fill((int*)dungeon, (int*)(dungeon + lengthof(dungeon)), 4); //dungeon初期化
     
 	//部屋と通路の作成を配置
@@ -94,7 +105,7 @@ void Make_Dungeon::make_dungeon() {
 			if (maze[i][j] == 0) {
 
 				//乱数0～99が20より下(20 %)の確率　->部屋の作成
-				if (rand() % 100 < 20) {
+				if (rand100(mt) < 20) {
 
 					for (int roomy = -1; roomy < 2; roomy++) {
 						for (int roomx = -1; roomx < 2; roomx++) {
@@ -124,49 +135,77 @@ void Make_Dungeon::make_dungeon() {
 		}
 	}
 
+	//イベントのセット
 	set_event();
 	
 }
 
+//////イベントのセット////////
 void Make_Dungeon::set_event() {
-	int x, y;
-	std::random_device rnd;
-	std::mt19937 ran(rnd());
-	std::uniform_int_distribution<> randH(3, DUNG_H - 4);
-	std::uniform_int_distribution<> randW(3, DUNG_W - 4);
-	std::uniform_int_distribution<> rand100(0, 100);
 
+	int x, y;
+
+	//一様分布乱数生成器の作成
+	std::random_device rnd; //真の乱数
+	std::mt19937 mt(rnd()); //疑似乱数を真の乱数で初期化
+	std::uniform_int_distribution<> randH(3, DUNG_H - 4); //3～ダンジョンの高さ-4の一様分布乱数
+	std::uniform_int_distribution<> randW(3, DUNG_W - 4); //3～ダンジョンの幅-4の一様分布乱数
+	std::uniform_int_distribution<> rand100(0, 100);      //0~100の一様分布乱数
+
+
+	////////階段の設置//////////
+
+	//階段を設置するまで続ける
 	while (1) {
-		x = randW(ran);
-		y = randH(ran);
+		//乱数で設定
+		x = randW(mt);
+		y = randH(mt);
+
+		//設定したものが道であるならば設置して終了
 		if (dungeon[y][x] == 0) {
+
+			//階段の周りは3*3の部屋にする
 			for (int i = -1; i < 2; i++) {
 				for (int j = -1; j < 2; j++) {
 					dungeon[y + i][x + j] = 0;
 				}
 			}
-			dungeon[y][x] = 3; //階段
-			break;
+
+			dungeon[y][x] = 3; //階段設置
+			break; //繰り返し終了
 		}
 	}
+
+	////////イベントの設置//////////
+
     //70回でランダムで配置(この数字が多い程イベントの配置数は上がる)
 	for (int i = 0; i < 70; i++) {
-		x = randW(ran);
-		y = randH(ran);
+		//乱数で設定
+		x = randW(mt);
+		y = randH(mt);
+		//設定したものが道であるならば設置
 		if (dungeon[y][x] == 0) {
-			int temp = rand100(ran);
-			if (temp <= 20)  dungeon[y][x] = 1; //宝箱
-			if (20 < temp)   dungeon[y][x] = 2; //煙
+		 
+			int temp = rand100(mt);
+			if (temp <= 20)  dungeon[y][x] = 1; ////乱数で20以下で宝箱
+			if (20 < temp)   dungeon[y][x] = 2; //乱数で20より超過で繭
 		}
 	}
 
 }
+
+/////////描画////////
 void Make_Dungeon::draw() {
-	double p_x, p_y;
+
 	//Controlの参照
 	Control& cont = Control::Instance();
+	//プレイヤーの位置を取得
+	double p_x, p_y;
 	cont.player_positon(&p_x, &p_y);
-	//プレイヤから縦10マス横11の範囲を描画する
+
+
+
+	////////プレイヤから11*11の範囲を描画する/////////////
 
 	for (int i = -5; i < 6; i++) {
 		for (int j = -5; j < 6; j++) {
@@ -175,25 +214,33 @@ void Make_Dungeon::draw() {
 			int X = (j + 5) * F_SIZE;  //床のパネルのx座標 #0～10*80
 			int Y = (i + 5) * F_SIZE;  //y座標
 
+			//プレイヤーの位置からi,jマス離れているマスの座標を計算
 			int tempx = int(p_x) + j;
 			int tempy = int(p_y) + i;
 
 			//tempx,tempyがダンジョンの大きさの範囲内ならば描画
 			if (0 <= tempx && tempx < DUNG_W  && 0 <= tempy && tempy < DUNG_H ) {
+
+				//道
 				if (dungeon[tempy][tempx] ==0) {
 					DrawGraph(X, Y, floorgh, TRUE);
 				}
+				//宝箱
 				else if (dungeon[tempy][tempx] == 1) {
 					DrawGraph(X, Y, boxgh, TRUE);
 				}
+				//繭
 				else if (dungeon[tempy][tempx] == 2) {
 					DrawGraph(X, Y, cocoongh, TRUE);
 				}
+				//階段
 				else if (dungeon[tempy][tempx] == 3) {
 					DrawGraph(X, Y, stairsgh, TRUE);
 				}
+				//壁
 				else if (dungeon[tempy][tempx] == 4) {
 					DrawGraph(X, Y-40, wallgh, TRUE);
+					//(tempx,tempy)の1つ上のマスも壁ならば天井描画
 					if (tempy >= 1 && dungeon[tempy - 1][tempx] == 4) {
 						DrawGraph(X, Y-80, wall2gh, TRUE);
 					}
@@ -201,37 +248,55 @@ void Make_Dungeon::draw() {
 			}
 		}
 	}
+
+	//暗闇を描画
 	DrawGraph(0, 0, darkgh, TRUE);
 	
 }
+
+////////次の階に移動、作成////////////
 void Make_Dungeon::next_floor() {
-	if (count < 556) {
+
+	///ループカウントが556になるまで
+	if (count < 656) {
+
+		//ループカウントが255になるまでライブラリでだんだん画面の彩度を減らす
 		if (count >= 0 && count < 256) {
 			SetDrawBright(255 - count, 255 - count, 255 - count);
 		}
+
+		//ループカウントが256で新しい階の作成
 		if (count == 256)
 		{
 			make_dungeon();
 		}
-		if (count >= 300 ) {
-			SetDrawBright(count - 300, count - 300, count - 300);
+
+		//ループカウントが300になったらライブラリで彩度を元にもどす
+		if (count >= 400 ) {
+			SetDrawBright(count - 400, count - 400, count - 400);
 		}
+		//カウントは4ずつ増える
 		count +=4;
+	
 	}
 	else
-		if (count == 556) {
-			count = 0;
-		}
-}
+    //ループカウントが556になったらカウントを0にする
+	if (count ==656) {
 
+		count = 0;
+	}
+}
+//////////添え字のダンジョンの情報を返す//////////////
 int Make_Dungeon::get_dungeon_info(int index_x,int index_y) {
 	return dungeon[index_y][index_x];
 }
 
+//////////添え字の位置のダンジョンの情報を引数の情報に更新///////////
 void Make_Dungeon::set_dungeon_info(int info, int index_x, int index_y) {
 	dungeon[index_y][index_x] = info;
 }
 
+//////////ループで行う関数////////
 void Make_Dungeon::All () {
 	draw();
 }

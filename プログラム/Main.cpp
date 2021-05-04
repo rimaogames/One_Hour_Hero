@@ -2,11 +2,13 @@
 #include "InputKey.h"
 #include "SceneMgr.h"
 int hiscore = 1;
+
+
 // プログラムは WinMain から始まります
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     ChangeWindowMode(TRUE);//ライブラリでゲーム画面を表示
-    SetGraphMode(880 ,720, 32);
+    SetGraphMode(880 ,720, 32); //画面の大きさ設定
     
     
     if (DxLib_Init() == -1) return -1;//DXライブラリの初期化
@@ -15,7 +17,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //キーの入力管理クラスのインスタンス
      InputKey input;
 
-
+     //シーン管理クラスの参照
      SceneMgr& scenemgr = SceneMgr::Instance();
 
      while (!ProcessMessage()) {//ウィンドウが閉じるまで
@@ -26,7 +28,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	      //キーの入力状態の更新
 	      input.Update_Keystate();
 
-          scenemgr.Loop();
+          //ゲームの処理
+          scenemgr.loop();
 
 
      	  //ライブラリで表画面に転送

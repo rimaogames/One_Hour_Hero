@@ -4,7 +4,7 @@
 char InputKey::keybuf[KEY] = { 0 };
 int InputKey::keyframe[KEY] = { 0 };
 
-// キーの入力状態更新
+////// キーの入力状態更新/////////
 void InputKey::Update_Keystate() {
 
 	// ライブラリで全てのキーの入力状態を得る
@@ -29,12 +29,12 @@ void InputKey::Update_Keystate() {
 }
 
 
-//引数のキーが押された？
+//////////引数のキーが押された？////////
 bool InputKey::GetKey(int KeyCode) {
 	return keyframe[KeyCode] > 0;
 }
 
-//引数のキーが押された＆押し始めか？
+//////////引数のキーが押された＆押し始めか？////////////////
 bool InputKey::GetKeyPush(int KeyCode) {
 	return keyframe[KeyCode] == 1;
 }
